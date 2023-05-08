@@ -65,7 +65,7 @@
                   <div class="menu-title">Ledgers</div>
               </a>
               <ul>
-                  <li> <a href="{{route('get.ledgers')}}"><i class="bi bi-circle"></i>All Users Ledger</a>
+                  <li> <a href="{{route('get.ledgers')}}"><i class="bi bi-circle"></i>All Shops Ledger</a>
                   </li>
                   <li> <a href="{{route('get.add.ledger')}}"><i class="bi bi-circle"></i>Add Ledger Record</a>
                   </li>

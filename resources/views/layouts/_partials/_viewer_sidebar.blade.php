@@ -10,6 +10,36 @@
         </div>
     </div>
     <!--navigation-->
-    
+
+    <ul class="metismenu" id="menu">
+
+        <div class="menu-title">Products</div>
+        <li>
+            <a href="javascript:;" class="has-arrow">
+                <div class="parent-icon"><i class="bi bi-box"></i>
+                </div>
+                <div class="menu-title">Products</div>
+            </a>
+            <ul>
+                <li> <a href="{{route('get.viewer.products')}}"><i class="bi bi-circle"></i>All Products</a>
+                </li>
+            </ul>
+        </li>
+
+
+        <div class="menu-title">Ledgers</div>
+        <li>
+            <a href="javascript:;" class="has-arrow">
+                <div class="parent-icon"><i class="bi bi-calculator"></i>
+                </div>
+                <div class="menu-title">Ledgers</div>
+            </a>
+            <ul>
+                <li> <a href="{{route('viewer.ledgers')}}"><i class="bi bi-circle"></i>All Shops Ledger</a>
+                </li>
+            </ul>
+        </li>
+
+    </ul>
     <!--end navigation-->
 </aside>

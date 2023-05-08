@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Route\Http\Admin;
+use Route\Http\Viewer;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,6 +17,8 @@ use Route\Http\Admin;
 */
 
 Admin::register();
+Viewer::register();
+
 
 Route::get('/', function () {
     $view = (Auth::check()) ? 'dashboard' : 'login';
@@ -23,6 +26,6 @@ Route::get('/', function () {
     // return view('welcome');
 });
 
-Route::get('/dashboard', [DashboardController::class,'dashboard'])->middleware(['auth'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class,'dashboard'])->middleware(['auth:sanctum'])->name('dashboard');
 
 require __DIR__.'/auth.php';
