@@ -33,14 +33,6 @@
             </div>
             <div class="row pt-3">
                 <div class="col-md-2">
-                <label>Email :</label>
-                </div>
-                <div class="col-md-10">
-                    <input name="email" type="email" class="form-control" value="" placeholder="johnwick@gmail.com">
-                </div>
-            </div>
-            <div class="row pt-3">
-                <div class="col-md-2">
                 <label>Address :</label>
                 </div>
                 <div class="col-md-10">
@@ -56,23 +48,6 @@
                 </div>
             </div>
 
-            <div class="row pt-3">
-                <div class="col-md-2">
-                    <label>Post Code :</label>
-                </div>
-                <div class="col-md-10">
-                    <input name="post_code" type="text" class="form-control" value="" placeholder="Post Code Can be Null">
-                </div>
-            </div>
-
-            <div class="row pt-3">
-                <div class="col-md-2">
-                    <label>Country :</label>
-                </div>
-                <div class="col-md-10">
-                    <input name="country" type="text" class="form-control" value="" placeholder="Country Can be Null">
-                </div>
-            </div>
 
 
             <div class="pt-3">

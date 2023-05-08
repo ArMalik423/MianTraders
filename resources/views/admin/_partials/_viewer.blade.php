@@ -14,7 +14,7 @@
                     <td class="font-w600 font-size-sm">{{$data->name ?? ''}}</td>
                     <td class="font-w600 font-size-sm">{{$data->email ?? ''}}</td>
                     <td>
-
+                        <button class="d-inline btn btn-sm btn-alt-info" onclick="deleteRecord('viewer/delete',{{ $data->id ?? ''}})"><i class="bi bi-trash" aria-hidden="true" style="color:red"></i></button>
 
                     </td>
                 </tr>

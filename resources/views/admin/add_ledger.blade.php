@@ -59,7 +59,7 @@
                             <label>Quantity :</label>
                         </div>
                         <div class="col-md-10">
-                            <input name="quantity" type="integer" class="form-control" placeholder="10">
+                            <input name="quantity" type="number" class="form-control" placeholder="10">
                         </div>
                     </div>
 

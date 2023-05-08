@@ -20,7 +20,6 @@ class CreateProductsTable extends Migration
             $table->string('product_code',255)->unique();
             $table->integer('purchase_price');
             $table->integer('sale_price');
-            $table->integer('discount')->nullable();
             $table->integer('quantity')->default(0);
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

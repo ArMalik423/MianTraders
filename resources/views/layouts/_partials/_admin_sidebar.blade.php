@@ -1,10 +1,10 @@
 <aside class="sidebar-wrapper" data-simplebar="true">
           <div class="sidebar-header">
             <div>
-              <img src="assets/images/logo-icon.png" class="logo-icon" alt="logo icon">
+              <img src="{{asset('backend_view/assets/images/ht_logo.png')}}" class="logo-icon" alt="logo icon" style="height: 50px;width: 50px">
             </div>
             <div>
-              <h4 class="logo-text">Husnain Traders</h4>
+              <h4 class="logo-text">Hussnain Traders</h4>
             </div>
             <div class="toggle-icon ms-auto"> <i class="bi bi-list"></i>
             </div>
@@ -12,7 +12,7 @@
           <!--navigation-->
 
           <ul class="metismenu" id="menu">
-              <li class="menu-label">Viewers</li>
+              <li class="menu-title">Viewers</li>
             <li>
               <a href="javascript:;" class="has-arrow">
                 <div class="parent-icon"><i class="bi bi-person-fill"></i>
@@ -30,7 +30,7 @@
               <div class="menu-title">Products</div>
             <li>
               <a href="javascript:;" class="has-arrow">
-                <div class="parent-icon"><i class="bi bi-plus-square-fill"></i>
+                <div class="parent-icon"><i class="bi bi-box"></i>
                 </div>
                 <div class="menu-title">Products</div>
               </a>
@@ -45,7 +45,7 @@
               <div class="menu-title">Shops</div>
             <li>
               <a href="javascript:;" class="has-arrow">
-                <div class="parent-icon"><i class="bi bi-plus-square-fill"></i>
+                <div class="parent-icon"><i class="bi bi-shop"></i>
                 </div>
                 <div class="menu-title">Shops</div>
               </a>
@@ -60,7 +60,7 @@
               <div class="menu-title">Ledgers</div>
           <li>
               <a href="javascript:;" class="has-arrow">
-                  <div class="parent-icon"><i class="bi bi-plus-square-fill"></i>
+                  <div class="parent-icon"><i class="bi bi-calculator"></i>
                   </div>
                   <div class="menu-title">Ledgers</div>
               </a>

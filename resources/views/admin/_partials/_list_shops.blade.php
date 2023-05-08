@@ -3,11 +3,8 @@
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Email</th>
                 <th>Address</th>
                 <th>Phone Number</th>
-                <th>Post Code</th>
-                <th>Country</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -16,11 +13,8 @@
                 @foreach($shops as $data)
                 <tr>
                     <td class="font-w600 font-size-sm">{{$data->name ?? ''}}</td>
-                    <td class="font-w600 font-size-sm">{{$data->email ?? ''}}</td>
                     <td class="font-w600 font-size-sm">{{$data->address ?? ''}}</td>
                     <td class="font-w600 font-size-sm">{{$data->phone_number ?? ''}}</td>
-                    <td class="font-w600 font-size-sm">{{$data->post_code ?? ''}}</td>
-                    <td class="font-w600 font-size-sm">{{$data->country ?? ''}}</td>
                     <td>
                         <a class="d-inline btn btn-sm btn-alt-info" href="{{ route('get.update.shop',Crypt::encrypt($data->id) ) }}"><i class="bi bi-pencil" aria-hidden="true" style="color:green" ></i></a>
                         <button class="d-inline btn btn-sm btn-alt-info" onclick="deleteRecord('shop/delete',{{ $data->id ?? ''}})"><i class="bi bi-trash" aria-hidden="true" style="color:red"></i></button>

@@ -46,7 +46,7 @@
                 <label>Purchase Price :</label>
                 </div>
                 <div class="col-md-10">
-                    <input name="purchase_price" type="integer" class="form-control" placeholder="10" value="{{ $product->purchase_price ?? 0 }}">
+                    <input name="purchase_price" type="number" class="form-control" placeholder="10" value="{{ $product->purchase_price ?? 0 }}">
                 </div>
             </div>
             <div class="row pt-3">
@@ -54,15 +54,7 @@
                 <label>Sale Price :</label>
                 </div>
                 <div class="col-md-10">
-                    <input name="sale_price" type="integer" class="form-control" placeholder="15" value="{{ $product->sale_price ?? 0 }}">
-                </div>
-            </div>
-            <div class="row pt-3">
-                <div class="col-md-2">
-                <label>Discount :</label>
-                </div>
-                <div class="col-md-10">
-                    <input name="discount" type="integer" class="form-control" placeholder="5" value="{{ $product->discount ?? 0 }}">
+                    <input name="sale_price" type="number" class="form-control" placeholder="15" value="{{ $product->sale_price ?? 0 }}">
                 </div>
             </div>
             <div class="row pt-3">
@@ -70,7 +62,7 @@
                     <label>Quantity :</label>
                 </div>
                 <div class="col-md-10">
-                    <input name="quantity" type="integer" class="form-control" placeholder="100" value="{{ $product->quantity ?? 0 }}">
+                    <input name="quantity" type="number" class="form-control" placeholder="100" value="{{ $product->quantity ?? 0 }}">
                 </div>
             </div>
 

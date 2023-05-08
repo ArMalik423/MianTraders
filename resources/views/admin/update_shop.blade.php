@@ -34,14 +34,6 @@
                     </div>
                     <div class="row pt-3">
                         <div class="col-md-2">
-                            <label>Email :</label>
-                        </div>
-                        <div class="col-md-10">
-                            <input name="email" type="email" class="form-control" value="{{ $shop->email ?? '' }}" placeholder="johnwick@gmail.com">
-                        </div>
-                    </div>
-                    <div class="row pt-3">
-                        <div class="col-md-2">
                             <label>Address :</label>
                         </div>
                         <div class="col-md-10">
@@ -56,25 +48,6 @@
                             <input name="phone_number" type="text" class="form-control" value="{{ $shop->phone_number ?? '' }}" placeholder="+44 7700 900598">
                         </div>
                     </div>
-
-                    <div class="row pt-3">
-                        <div class="col-md-2">
-                            <label>Post Code :</label>
-                        </div>
-                        <div class="col-md-10">
-                            <input name="post_code" type="text" class="form-control" value="{{ $shop->post_code ?? '' }}" placeholder="Post Code Can be Null">
-                        </div>
-                    </div>
-
-                    <div class="row pt-3">
-                        <div class="col-md-2">
-                            <label>Country :</label>
-                        </div>
-                        <div class="col-md-10">
-                            <input name="country" type="text" class="form-control" value="{{ $shop->country ?? '' }}" placeholder="Country Can be Null">
-                        </div>
-                    </div>
-
 
                     <div class="pt-3">
                         <button class="btn btn-primary" onclick="validateFieldsByFormId(this)"

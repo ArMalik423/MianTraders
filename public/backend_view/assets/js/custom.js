@@ -63,13 +63,7 @@ function validateFieldsByFormId(e) {
                     }
                 } else {
 
-                    if(isPasswordUpdateForm){
-                        $('.loader').css('visibility', 'hidden');
-                        $('.password-update-form-error-message').show();
-                        $('.password-update-form-success-message').hide();
-                        $('.response-error-text').text(data.errors);
-                        // $('#'+formId)[0].reset();
-                    }
+
                     console.log(data.message,'error message');
                     e.disabled=false;
                     var errors = data.errors;
@@ -88,19 +82,9 @@ function validateFieldsByFormId(e) {
                             errorMsg += nowErrorMessage + '<br>';
                         }
                     });
-                    //  bsAlert(data.message, 'alert-danger', 'alert_placeholder');
-                    if(isWebForm){
-                        // if(isAddCsvProductsForm){
-                        //     console.log(data,"dataaa")
-                        // $('.loading-gif-static').hide();
-                        // var row = '<tr id="errors-cls" class="errors-message"><td><h4>'+'You Got an Error'+'</h4></td></tr>';
-                        // var row1 = '<tr ><td class="errors-message">'+errorMsg+'</td></tr>';
-                        // $('.add-seminar-popup').append(row);
-                        // $('.add-seminar-popup').append(row1);
-                    }
-                    else{
-                        notificationAlert('error', errorMsg, 'Inconceivable!');
-                    }
+
+                    notificationAlert('error', errorMsg, 'Inconceivable!');
+
                     $(`#${validationSpanId}`).html(buttonHtml);
                 }
             },
@@ -125,15 +109,10 @@ function validateFieldsByFormId(e) {
                     }
                 });
 
-                if(isWebForm){
-                    // // $('.loading-gif-static').hide();
-                    // var row = '<tr><td>'+errorMsg+'</td></tr>';
-                    // $('.add-seminar-popup').append(row);
-                }
-                else{
 
-                    notificationAlert('error', errorMsg, 'Inconceivable!');
-                }
+
+                notificationAlert('error', errorMsg, 'Inconceivable!');
+
                 //  bsAlert(errorMsg, 'alert-danger', 'alert_placeholder');
                 $(`#${validationSpanId}`).html(buttonHtml);
             },
@@ -503,6 +482,244 @@ function deleteRecord(route, id, text) {
         notificationAlert('error', 'Route is not defined', 'Inconceivable!');
     }
 }
+function ledgerPayment(route,accountId,shopId){
+    if (typeof (route) == "undefined" || route === '') {
+        route = '';
+    }
+    if (typeof (accountId) == "undefined" || accountId === '') {
+        accountId = 0;
+    }
+    if (typeof (shopId) == "undefined" || shopId === '') {
+        shopId = 0;
+    }
+    if (route !== '') {
+        Swal.fire({
+            title: 'Please Add Amount for payment!',
+            input: 'text',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Add Payment!'
+        }).then((result) => {
+            if (result.value) {
+                var dataToPost = {
+                  'shop_id': shopId,
+                  'account_id': accountId,
+                  'amount': result.value,
+                };
+                console.log(dataToPost)
+                var url = baseURL + route ;
+                $.ajax({
+                    type: "POST",
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    url: url,
+                    data: dataToPost,
+                    dataType: "json",
+                    beforeSend: function () {
+                        $('.loader').css('visibility', 'visible');
+                    },
+                    success: function (data) {
+                        if (data.status === 'success') {
+                            // $('.loader').css('visibility', 'hidden');
+                            swal.fire({
+                                title: "Success!",
+                                type: "success",
+                                // text: "Corporate Deleted Successfully",
+                                text: data.message ?? "",
+                                icon: "success",
+                                confirmButtonClass: "btn btn-outline-info",
+                            });
+                            if (data.redirect_to !== '' && typeof(data.redirect_to) != "undefined") {
+                                setTimeout(function() {
+                                    reload_page(data.redirect_to)
+                                }, 2000);
+                            }
+                        }else if (data.status === 'error'){
+                            errorMsg ='';
+                            if(data.errors){
+                                var errors = data.errors;
+                                $.each(errors, function(i, val) {
+                                    if (errors[i] != 'undefined' && errors[i] != null) {
+                                        let nowErrorMessage = errors[i];
+                                        if (i == 'errors') {
+                                            console.log(errors[i]);
+                                            let newErrors = errors[i];
+                                            $.each(newErrors, function(index, value) {
+                                                nowErrorMessage = newErrors[index][0] ? newErrors[index][0] : '';
+                                            });
+                                        }
+                                        errorMsg += nowErrorMessage;
+                                    }
+                                });
+                            }
+                            console.log(data)
+                            swal.fire({
+                                icon: 'error',
+                                title: data.message ?? 'Error',
+                                text: (errorMsg != '') ? errorMsg : 'Something went wrong!',
+                            })
+                        }
 
+                    },
+                    error: function (data) {
+                        errorMsg ='';
+                        if(data.errors){
+                            var errors = data.errors;
+                            $.each(errors, function(i, val) {
+                                if (errors[i] != 'undefined' && errors[i] != null) {
+                                    let nowErrorMessage = errors[i];
+                                    if (i == 'errors') {
+                                        console.log(errors[i]);
+                                        let newErrors = errors[i];
+                                        $.each(newErrors, function(index, value) {
+                                            nowErrorMessage = newErrors[index][0] ? newErrors[index][0] : '';
+                                        });
+                                    }
+                                    errorMsg += nowErrorMessage;
+                                }
+                            });
+                        }
+                        swal.fire({
+                            icon: 'error',
+                            title: data.message ?? 'Error',
+                            text: (errorMsg != '') ? errorMsg : 'Something went wrong!',
+                        })
+                    },
+                    complete: function () {
+                        $('.loader').css('visibility', 'hidden');
+                    },
+                })
+            }
+            else{
+                swal.fire({
+                    icon: 'error',
+                    title: 'Please Enter Amount Field',
+                })
+            }
+        })
+    }else {
+        notificationAlert('error', 'Route is not defined', 'Inconceivable!');
+    }
+}
+function productPayemnt(route,productId)
+{
+    if (typeof (route) == "undefined" || route === '') {
+        route = '';
+    }
+    if (typeof (productId) == "undefined" || productId === '') {
+        productId = 0;
+    }
+    if (route !== '') {
+        Swal.fire({
+            title: 'Please Add Amount for payment!',
+            input: 'text',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Add Payment!'
+        }).then((result) => {
+            if (result.value) {
+                var dataToPost = {
+                    'product_id': productId,
+                    'amount': result.value,
+                };
+                console.log(dataToPost)
+                var url = baseURL + route ;
+                $.ajax({
+                    type: "POST",
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    url: url,
+                    data: dataToPost,
+                    dataType: "json",
+                    beforeSend: function () {
+                        $('.loader').css('visibility', 'visible');
+                    },
+                    success: function (data) {
+                        if (data.status === 'success') {
+                            // $('.loader').css('visibility', 'hidden');
+                            swal.fire({
+                                title: "Success!",
+                                type: "success",
+                                // text: "Corporate Deleted Successfully",
+                                text: data.message ?? "",
+                                icon: "success",
+                                confirmButtonClass: "btn btn-outline-info",
+                            });
+                            if (data.redirect_to !== '' && typeof(data.redirect_to) != "undefined") {
+                                setTimeout(function() {
+                                    reload_page(data.redirect_to)
+                                }, 2000);
+                            }
+                        }else if (data.status === 'error'){
+                            errorMsg ='';
+                            if(data.errors){
+                                var errors = data.errors;
+                                $.each(errors, function(i, val) {
+                                    if (errors[i] != 'undefined' && errors[i] != null) {
+                                        let nowErrorMessage = errors[i];
+                                        if (i == 'errors') {
+                                            console.log(errors[i]);
+                                            let newErrors = errors[i];
+                                            $.each(newErrors, function(index, value) {
+                                                nowErrorMessage = newErrors[index][0] ? newErrors[index][0] : '';
+                                            });
+                                        }
+                                        errorMsg += nowErrorMessage;
+                                    }
+                                });
+                            }
+                            console.log(data)
+                            swal.fire({
+                                icon: 'error',
+                                title: data.message ?? 'Error',
+                                text: (errorMsg != '') ? errorMsg : 'Something went wrong!',
+                            })
+                        }
+
+                    },
+                    error: function (data) {
+                        errorMsg ='';
+                        if(data.errors){
+                            var errors = data.errors;
+                            $.each(errors, function(i, val) {
+                                if (errors[i] != 'undefined' && errors[i] != null) {
+                                    let nowErrorMessage = errors[i];
+                                    if (i == 'errors') {
+                                        console.log(errors[i]);
+                                        let newErrors = errors[i];
+                                        $.each(newErrors, function(index, value) {
+                                            nowErrorMessage = newErrors[index][0] ? newErrors[index][0] : '';
+                                        });
+                                    }
+                                    errorMsg += nowErrorMessage;
+                                }
+                            });
+                        }
+                        swal.fire({
+                            icon: 'error',
+                            title: data.message ?? 'Error',
+                            text: (errorMsg != '') ? errorMsg : 'Something went wrong!',
+                        })
+                    },
+                    complete: function () {
+                        $('.loader').css('visibility', 'hidden');
+                    },
+                })
+            }
+            else{
+                swal.fire({
+                    icon: 'error',
+                    title: 'Please Enter Amount Field',
+                })
+            }
+        })
+    }else {
+        notificationAlert('error', 'Route is not defined', 'Inconceivable!');
+    }
+}
 
 

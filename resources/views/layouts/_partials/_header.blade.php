@@ -1,4 +1,4 @@
-<header class="top-header">        
+<header class="top-header">
       <nav class="navbar navbar-expand gap-3">
         <div class="mobile-toggle-icon fs-3">
             <i class="bi bi-list"></i>
@@ -8,7 +8,7 @@
           </form>
           <div class="top-navbar-right ms-auto">
             <ul class="navbar-nav align-items-center">
-             
+
             <li class="nav-item dropdown dropdown-user-setting">
               <a class="nav-link dropdown-toggle dropdown-toggle-nocaret" href="#" data-bs-toggle="dropdown">
                 <div class="user-setting d-flex align-items-center">
@@ -29,16 +29,16 @@
                  </li>
                  <li><hr class="dropdown-divider"></li>
                  <li>
-                    <a class="dropdown-item" href="pages-user-profile.html">
+                    <a class="dropdown-item" href="{{ route('get.change.password') }}">
                        <div class="d-flex align-items-center">
                          <div class=""><i class="bi bi-person-fill"></i></div>
                          <div class="ms-3"><span>Change Password</span></div>
                        </div>
                      </a>
                   </li>
-                  
+
                   <li>
-                    
+
                     <a class="dropdown-item" href="{{ route('logout') }}"
                         onclick="event.preventDefault();
                                       document.getElementById('logout-form').submit();">
@@ -50,11 +50,10 @@
                         @csrf
                     </form>
                   </li>
-                  
-                    
+
+
               </ul>
-            </li> 
-              </div>
+            </li>
             </li>
             </ul>
             </div>

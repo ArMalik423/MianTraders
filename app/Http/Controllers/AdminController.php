@@ -6,7 +6,9 @@ use App\Http\Enums\RoleUser as EnumsRoleUser;
 use App\Http\Traits\ApiResponse;
 use App\Models\Account;
 use App\Models\Ledger;
+use App\Models\Paid;
 use App\Models\Product;
+use App\Models\ProductDetail;
 use App\Models\RoleUser;
 use App\Models\User;
 use App\Models\Shop;
@@ -59,12 +61,22 @@ class AdminController extends Controller
                 'role_id' => EnumsRoleUser::Viewer,
             ]);
         }catch(Exception $e){
-            return $this->error('SomeThing Went Wrong. Please Try Again');
+            return $this->error($e->getMessage());
         }
         $redirectionRoute = '/viewers';
 
         return $this->success('Viewer Added Successfully',['redirect_to' => $redirectionRoute]);
 
+    }
+
+    public function deleteViewer($id)
+    {
+        $user = User::where('id',$id)->first();
+        if(!$user) return $this->error('No Viewer Found');
+        $user->delete();
+        $redirectionRoute = '/viewers';
+
+        return $this->success('Viewer Deleted Successfully',['redirect_to' => $redirectionRoute]);
     }
 
     public function getProducts()
@@ -88,14 +100,14 @@ class AdminController extends Controller
             'product_code' => ['required','string','min:5','unique:products,product_code'],
             'purchase_price' => ['required', 'integer','min:1'],
             'sale_price' => ['required', 'integer','min:1','gt:purchase_price'],
-            'discount' => ['nullable', 'integer','min:1','lt:purchase_price'],
             'quantity' => ['required', 'integer','min:1']
         ]);
         if ($validator->fails()) {
             return $this->error('Validation Failed', ['errors' => $validator->errors()]);
         }
+//        dd($request->all());
 
-
+        DB::beginTransaction();
         try{
             $product = Product::create([
                 'name' => $request->input('name'),
@@ -103,11 +115,34 @@ class AdminController extends Controller
                 'product_code' => $request->input('product_code'),
                 'purchase_price' =>  $request->input('purchase_price'),
                 'sale_price' =>  $request->input('sale_price'),
-                'discount' =>  $request->input('discount') ?? 0,
                 'quantity' =>  $request->input('quantity') ?? 0,
             ]);
+            $sum = 0;
+            $oldProductDetails = ProductDetail::where('product_id',$product->id)->get();
+            if($oldProductDetails->count() > 0){
+                foreach($oldProductDetails as $oldProductDetail){
+                    if($oldProductDetail->status == '0'){
+                        $sum = $sum + $oldProductDetail->credit;
+                    }else{
+                        $sum = $sum - $oldProductDetail->debit;
+                    }
+                }
+            }
+            $totalCost = (int)($product->quantity*$product->purchase_price);
+            $product = ProductDetail::create([
+                'product_id' => $product->id,
+                'quantity' => $request->input('quantity'),
+                'profit' => (int)($product->quantity*($product->sale_price - $product->purchase_price)),
+                'status' => '0',
+                'credit' => $totalCost,
+                'closing_account' => $sum + $totalCost,
+
+            ]);
+
+            DB::commit();
         }catch(Exception $e){
-            return $this->error('SomeThing Went Wrong. Please Try again');
+            DB::rollBack();
+            return $this->error($e->getMessage());
         }
         $redirectionRoute = '/products';
 
@@ -131,26 +166,52 @@ class AdminController extends Controller
             'product_code' => 'required|string|min:5|unique:products,product_code,'.$id ,
             'purchase_price' => ['required', 'integer','min:1'],
             'sale_price' => ['required', 'integer','min:1','gt:purchase_price'],
-            'discount' => ['nullable', 'integer','min:1','lt:purchase_price'],
             'quantity' => ['required', 'integer','min:1']
         ]);
         if ($validator->fails()) {
             return $this->error('Validation Failed', ['errors' => $validator->errors()]);
         }
 
+        DB::beginTransaction();
         try{
             $product = Product::findOrFail($id);
+            $quantity = $product->quantity;
             $product->name = $request->input('name') ?? $product->name;
             $product->user_id = $this->getAuthUserId() ?? $product->user_id;
             $product->product_code = $request->input('product_code') ?? $product->product_code;
             $product->purchase_price =  $request->input('purchase_price') ?? $product->purchase_price;
             $product->sale_price =  $request->input('sale_price') ?? $product->sale_price;
-            $product->discount =  $request->input('discount') ?? $product->discount;
             $product->quantity =  $request->input('quantity') ?? $product->quantity;
             $product->save();
 
+            $sum = 0;
+            $oldProductDetails = ProductDetail::where('product_id',$product->id)->get();
+            if($oldProductDetails->count() > 0){
+                foreach($oldProductDetails as $oldProductDetail){
+                    if($oldProductDetail->status == '0'){
+                        $sum = $sum + $oldProductDetail->credit;
+                    }else{
+                        $sum = $sum - $oldProductDetail->debit;
+                    }
+                }
+            }
+            if($quantity > $product->quantity) return $this->error('Your quantity is less then previous stock');
+            if($quantity != $product->quantity) {
+                $detailQuantity = abs($product->quantity-$quantity);
+                $totalCost = (int)($detailQuantity*$product->purchase_price);
+                $productDetail = new ProductDetail();
+                $productDetail->product_id = $product->id;
+                $productDetail->quantity = $detailQuantity ?? '';
+                $productDetail->status = '0';
+                $productDetail->profit = (int)($detailQuantity*($product->sale_price - $product->purchase_price)) ?? '';
+                $productDetail->credit = $totalCost;
+                $productDetail->closing_account = $sum + $totalCost;
+                $productDetail->save();
+            }
+            DB::commit();
         }catch(Exception $e){
-            return $this->error('SomeThing Went Wrong. Please Try again');
+            DB::rollBack();
+            return $this->error($e->getMessage());
         }
 
         $redirectionRoute = '/products';
@@ -166,6 +227,63 @@ class AdminController extends Controller
         $redirectionRoute = '/products';
 
         return $this->success('Product Deleted Successfully',['redirect_to' => $redirectionRoute]);
+    }
+
+
+    public function payProduct(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'amount' => ['required', 'integer','min:1'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error('Validation Failed', ['errors' => $validator->errors()]);
+        }
+        $amount = $request->input('amount');
+        $productId = $request->input('product_id');
+        DB::beginTransaction();
+        try{
+            $product = Product::findOrFail($productId);
+
+            $sum = 0;
+            $oldProductDetails = ProductDetail::where('product_id',$productId)->get();
+            if($oldProductDetails->count() > 0){
+                foreach($oldProductDetails as $oldProductDetail){
+                    if($oldProductDetail->status == '0'){
+                        $sum = $sum + $oldProductDetail->credit;
+                    }else{
+                        $sum = $sum - $oldProductDetail->debit;
+                    }
+                }
+            }
+            $productDetail = new ProductDetail();
+            $productDetail->product_id = $product->id;
+            $productDetail->status = '1';
+            $productDetail->debit = $amount;
+            $productDetail->closing_account = $sum - $amount;
+            $productDetail->save();
+
+            DB::commit();
+        }catch(Exception $e){
+            DB::rollBack();
+            return $this->error($e->getMessage());
+        }
+
+        $redirectionRoute = '/products';
+
+        return $this->success('Product Updated Successfully',['redirect_to' => $redirectionRoute]);
+
+    }
+    public function productDetailView($productId)
+    {
+        $productId = Crypt::decrypt($productId);
+        $productDetails = ProductDetail::where('product_id',$productId)->with('product')->get();
+
+        $html = view('admin._partials._list_product_details',['productDetails' => $productDetails])->render();
+
+        return view('admin.product_detail_list',['product_detail_list' => $html]);
+
     }
 
     public function getShops()
@@ -185,11 +303,8 @@ class AdminController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:shops,email'],
             'address' => ['nullable', 'string','min:5'],
-            'phone_number' => ['nullable','regex:/^([0-9\s\-\+\(\)]*)$/','min:9'],
-            'post_code' => ['nullable','string','min:3'],
-            'country' => ['nullable', 'string','min:3','max:255']
+            'phone_number' => ['nullable','regex:/^([0-9\s\-\+\(\)]*)$/','min:9']
         ]);
         if ($validator->fails()) {
             return $this->error('Validation Failed', ['errors' => $validator->errors()]);
@@ -198,14 +313,11 @@ class AdminController extends Controller
         try{
             $shop = Shop::create([
                 'name' => $request->input('name'),
-                'email' => $request->input('email') ?? null,
                 'address' => $request->input('address') ?? null,
-                'phone_number' => $request->input('phone_number') ?? null,
-                'post_code' => $request->input('post_code') ?? null,
-                'country' => $request->input('country') ?? null,
+                'phone_number' => $request->input('phone_number') ?? null
             ]);
         }catch(Exception $e){
-            return $this->error('Something Went Wrong. Please Try Again');
+            return $this->error($e->getMessage());
         }
 
         $redirectionRoute = '/shops';
@@ -226,11 +338,8 @@ class AdminController extends Controller
         $id = $request->input('shop_id');
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:shops,email,'.$id],
             'address' => ['nullable', 'string','min:5'],
-            'phone_number' => ['nullable','regex:/^([0-9\s\-\+\(\)]*)$/','min:9'],
-            'post_code' => ['nullable','string','min:3'],
-            'country' => ['nullable', 'string','min:3','max:255']
+            'phone_number' => ['nullable','regex:/^([0-9\s\-\+\(\)]*)$/','min:9']
         ]);
         if ($validator->fails()) {
             return $this->error('Validation Failed', ['errors' => $validator->errors()]);
@@ -239,14 +348,11 @@ class AdminController extends Controller
         try{
             $shop = Shop::findOrFail($id);
             $shop->name = $request->input('name') ?? $shop->name;
-            $shop->email = $request->input('email') ?? $shop->email;
             $shop->address = $request->input('address') ?? $shop->address;
             $shop->phone_number = $request->input('phone_number') ?? $shop->phone_number;
-            $shop->post_code = $request->input('post_code') ?? $shop->phone_number;
-            $shop->country = $request->input('country') ?? $shop->country;
             $shop->save();
         }catch(Exception $e){
-            return $this->error('Something Went Wrong. Please Try Again');
+            return $this->error($e->getMessage());
         }
 
         $redirectionRoute = '/shops';
@@ -287,28 +393,47 @@ class AdminController extends Controller
         try{
             $product = Product::find($request->input('product_id'));
             $quantity = $request->input('quantity');
+            $shopId = $request->input('shop_id');
+            if($quantity > $product->quantity){
+                return $this->error("Order quantity exceeds your product quantity");
+            }
+            $sum = 0;
+            $oldLedgers = Ledger::where('shop_id',$shopId)->get();
+            if($oldLedgers->count() > 0){
+                foreach($oldLedgers as $oldLedger){
+                    if($oldLedger->status == '0'){
+                        $sum = $sum + $oldLedger->credit;
+                    }else{
+                        $sum = $sum - $oldLedger->debit;
+                    }
+                }
+            }
             $price = $product->sale_price;
-            $discount = $product->discount;
             $ledger = new Ledger();
             $ledger->shop_id = $request->input('shop_id');
             $ledger->product_id = $request->input('product_id');
             $ledger->price = $price;
             $ledger->quantity = $quantity;
-            $ledger->discount = $discount;
+            $ledger->status = '0';
+            $ledger->credit = (int)($quantity * $price);
+            $ledger->closing_account = $sum + $ledger->credit;
             $ledger->save();
+
+            $product->quantity = (int) ($product->quantity - $quantity);
+            $product->save();
 
             $account = Account::firstOrNew(['shop_id'=>$request->input('shop_id')]);
             if ($account->exists) {
                 // user already exists and was pulled from database.
                 $remainingAccount = $account->remaining_amount;
-                $amount =(($price*$quantity) - ($quantity*$discount));
+                $amount =(int)($price*$quantity);
                 $account->payable_amount =  (int)($account->payable_amount + $amount);
                 $account->remaining_amount = $amount + $remainingAccount;
                 $account->save();
             } else {
                 // user created from 'new'; does not exist in database.
                 $remainingAccount = $account->remaining_amount;
-                $account->payable_amount = (int)(($price*$quantity) -($quantity*$discount));
+                $account->payable_amount = (int)(($price*$quantity));
                 $account->remaining_amount = $account->payable_amount;
                 $account->save();
             }
@@ -316,7 +441,7 @@ class AdminController extends Controller
             DB::commit();
         }catch(Exception $e){
             DB::rollBack();
-            return $this->error('Something Went Wrong. Please Try Again');
+            return $this->error($e->getMessage());
         }
 
         $redirectionRoute = '/ledgers';
@@ -324,10 +449,114 @@ class AdminController extends Controller
     }
 
     public function getLedgers(){
-        $accounts = Account::all();
+        $accounts = Account::with('shop')->get();
         $html = view('admin._partials._list_ledgers',['accounts' => $accounts])->render();
 
         return view('admin.ledgers',['list_ledgers' => $html]);
+    }
+
+    public function getChangePasswordView()
+    {
+        return view('auth.change_password');
+    }
+
+    public function postChangePassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'old_password' => ['required', 'string'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ],[
+            'password.confirmed' => 'Password does not match',
+        ]);
+        if ($validator->fails()) {
+            return $this->error('Validation Failed', ['errors' => $validator->errors()]);
+        }
+        $user = $this->getAuthUser();
+
+        if(!Hash::check($request->input('old_password'),$user->password)){
+            return $this->error('Your password does not match with our system');
+        }
+        $user->password = Hash::make($request->input('password'));
+        $user->save();
+
+        $redirectionRoute = '/dashboard';
+        return $this->success('Password Changed Successfully',['redirect_to' => $redirectionRoute]);
+    }
+
+    public function payLedger(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'shop_id' => ['required', 'integer', 'exists:shops,id'],
+            'account_id' => ['required', 'integer', 'exists:accounts,id'],
+            'amount' => ['required', 'integer','min:1'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error('Validation Failed', ['errors' => $validator->errors()]);
+        }
+
+        Db::beginTransaction();
+        try{
+            $accountId = $request->input('account_id');
+            $amount =  $request->input('amount');
+            $account = Account::findOrFail($accountId);
+            $account->amount_paid = (int)($account->amount_paid + $amount);
+            $account->remaining_amount = (int)($account->remaining_amount - $amount);
+            $account->save();
+
+            $sum = 0;
+            $shopId = $request->input('shop_id');
+            $oldLedgers = Ledger::where('shop_id',$shopId)->get();
+            if($oldLedgers->count() > 0){
+                foreach($oldLedgers as $oldLedger){
+                    if($oldLedger->status == '0'){
+                        $sum = $sum + $oldLedger->credit;
+                    }else{
+                        $sum = $sum - $oldLedger->debit;
+                    }
+                }
+            }
+
+            if($amount > $sum) return $this->error('Your closing account is less than amount entered');
+            $ledger = new Ledger();
+            $ledger->shop_id = $shopId;
+            $ledger->status = '1';
+            $ledger->debit = $amount;
+            $ledger->closing_account = (int)($sum - $amount);
+            $ledger->save();
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->error($e->getMessage());
+        }
+
+        $redirectionRoute = '/ledgers';
+        return $this->success('Payment Added Successfully',['redirect_to' => $redirectionRoute]);
+
+    }
+
+    public function shopPaymentView($shopId)
+    {
+        $shopId = Crypt::decrypt($shopId);
+        $ledgers = Ledger::where('shop_id',$shopId)->with('shop','product')->get();
+        $html = view('admin._partials._list_payment',['ledgers' => $ledgers])->render();
+
+        $quantity = 0;
+        $totalCost = 0;
+        if($ledgers->count() > 0){
+            foreach ($ledgers as $ledger){
+
+                if($ledger->status == '0') {
+                    $quantity = $quantity + $ledger->quantity;
+                    $totalCost = (int)($totalCost + $ledger->credit);
+                }
+                else
+                    $totalCost = (int)($totalCost - $ledger->debit);
+            }
+        }
+
+        return view('admin.list_payments',['list_payments' => $html,'quantity' => $quantity, 'total_cost' =>$totalCost ]);
     }
 
 }
