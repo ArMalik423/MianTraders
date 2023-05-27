@@ -57,6 +57,10 @@ class ViewerController extends BaseController
     {
         $productId = Crypt::decrypt($productId);
         $productDetails = ProductDetail::where('product_id',$productId)->with('product')->get();
+        foreach ($productDetails as $productDetail) {
+            $expense = $productDetail->expense;
+            $productDetail['calculate_expense'] = isset($expense) ? (int)($productDetail->profit - $expense) : null;
+        }
 
         $html = view('viewer._partials._list_product_details',['productDetails' => $productDetails])->render();
 

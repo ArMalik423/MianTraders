@@ -21,6 +21,7 @@ class CreateProductDetailsTable extends Migration
             $table->enum('status', ['0','1'])->default('0')->comment('0= Credit , 1= Debit');
             $table->integer('credit')->nullable();
             $table->integer('debit')->nullable();
+            $table->integer('expense')->nullable();
             $table->integer('closing_account');
             $table->timestamps();
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');

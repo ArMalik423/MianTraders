@@ -460,7 +460,7 @@ function deleteRecord(route, id, text) {
                             swal.fire({
                                 icon: 'error',
                                 title: 'Error',
-                                text: 'Something went wrong!',
+                                text: data.message ? data.message : 'Something went wrong!',
                             })
                         }
 
@@ -469,7 +469,7 @@ function deleteRecord(route, id, text) {
                         swal.fire({
                             icon: 'error',
                             title: 'Error',
-                            text: 'Something went wrong!',
+                            text: data.message ? data.message : 'Something went wrong!',
                         })
                     },
                     complete: function () {
@@ -613,12 +613,19 @@ function productPayemnt(route,productId)
     }
     if (route !== '') {
         Swal.fire({
-            title: 'Please Add Amount for payment!',
+            title: 'Please Add Amount!',
             input: 'text',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
-            confirmButtonText: 'Add Payment!'
+            confirmButtonText: 'Add Amount!',
+            preConfirm: (result) => {
+                if(!result) {
+                    notificationAlert("error","Please Enter Value","Inconceivable!");
+                    return false;
+                }
+
+            }
         }).then((result) => {
             if (result.value) {
                 var dataToPost = {
@@ -708,12 +715,6 @@ function productPayemnt(route,productId)
                     complete: function () {
                         $('.loader').css('visibility', 'hidden');
                     },
-                })
-            }
-            else{
-                swal.fire({
-                    icon: 'error',
-                    title: 'Please Enter Amount Field',
                 })
             }
         })

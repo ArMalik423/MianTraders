@@ -1,4 +1,4 @@
-<div class="block-content block-content-full">
+<div class="block-content block-content-full overflow-class">
     <table class="table table-bordered table-striped table-vcenter js-dataTable-full-pagination" id="example">
         <thead>
             <tr>

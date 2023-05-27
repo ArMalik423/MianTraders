@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ShopLedgerExport;
 use App\Http\Enums\RoleUser as EnumsRoleUser;
 use App\Http\Traits\ApiResponse;
 use App\Models\Account;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules;
 use Illuminate\Support\Facades\Crypt;
 use Exception;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminController extends Controller
 {
@@ -221,7 +223,8 @@ class AdminController extends Controller
 
     public function deleteProduct($id)
     {
-        $product = Product::where('id',$id)->first();
+        $product = Product::where('id',$id)->with('legders','productDetails')->first();
+        if($product->legders->count() > 0 || $product->productDetails->count() > 0) return $this->error("You can not delete this product as it have ledger or product details");
         if(!$product) return $this->error('No Product Found');
         $product->delete();
         $redirectionRoute = '/products';
@@ -279,6 +282,10 @@ class AdminController extends Controller
     {
         $productId = Crypt::decrypt($productId);
         $productDetails = ProductDetail::where('product_id',$productId)->with('product')->get();
+        foreach ($productDetails as $productDetail) {
+            $expense = $productDetail->expense;
+            $productDetail['calculate_expense'] = isset($expense) ? (int)($productDetail->profit - $expense) : null;
+        }
 
         $html = view('admin._partials._list_product_details',['productDetails' => $productDetails])->render();
 
@@ -362,7 +369,8 @@ class AdminController extends Controller
 
     public function deleteShop($id)
     {
-        $shop = Shop::where('id',$id)->first();
+        $shop = Shop::where('id',$id)->with('legders')->first();
+        if($shop->legders->count() > 0 ) return $this->error("This shop have ledgers you can not delete it");
         if(!$shop) return $this->error('No Shop Found');
         $shop->delete();
         $redirectionRoute = '/shops';
@@ -556,7 +564,32 @@ class AdminController extends Controller
             }
         }
 
-        return view('admin.list_payments',['list_payments' => $html,'quantity' => $quantity, 'total_cost' =>$totalCost ]);
+        return view('admin.list_payments',['list_payments' => $html,'quantity' => $quantity, 'total_cost' =>$totalCost,'shopId' => $shopId ]);
     }
 
+    public function downloadLedger($id)
+    {
+        $shop = Shop::where('id', $id)->first();
+        $user = User::select('name','email')->get();
+        return (Excel::download(new ShopLedgerExport($id),($shop ? $shop->name :'Ledger').'.xlsx'));
+
+    }
+
+    public function addExpense(Request $request){
+        $validator = Validator::make($request->all(), [
+            'product_id' => ['required', 'integer', 'exists:product_details,id'],
+            'amount' => ['required', 'integer','min:1'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error('Validation Failed', ['errors' => $validator->errors()]);
+        }
+        $productDetails = ProductDetail::where('id',$request->input('product_id'))->first();
+        if($productDetails->status == 1) return $this->error("This is a debit Record you can not add expense in it");
+        $productDetails->expense = $request->input('amount') ?? '';
+        $productDetails->save();
+        $redirectionRoute = '/product/detail/'.Crypt::encrypt($productDetails->product_id);
+
+        return $this->success('Expense Added Successfully',['redirect_to' => $redirectionRoute]);
+    }
 }

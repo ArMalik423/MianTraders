@@ -18,4 +18,14 @@ class Product extends Model
         'discount',
         'quantity'
     ];
+
+    public function productDetails()
+    {
+        return $this->HasMany(ProductDetail::class);
+    }
+
+    public function legders()
+    {
+        return $this->HasMany(Ledger::class);
+    }
 }

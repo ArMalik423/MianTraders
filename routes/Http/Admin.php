@@ -40,6 +40,9 @@ class Admin
             Route::post('/ledger/pay', [AdminController::class, 'payLedger'])->name('ledger.pay');
             Route::get('/ledger/shop/payment/{shopId}', [AdminController::class,'shopPaymentView'])->name('shop.payment.view');
 
+            Route::get('/download/ledger/{id}', [AdminController::class, 'downloadLedger'])->name('download.ledger');
+
+            Route::post('/add/expense', [AdminController::class, 'addExpense'])->name('add.expense');
         });
 
         Route::group(['middleware' => 'auth:sanctum'],function(){

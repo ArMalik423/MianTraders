@@ -30,6 +30,9 @@
                 </div>
 
                 <hr/>
+               <div class="mb-5">
+                   <a class="btn btn-primary" style="float: right" href="{{ route('download.ledger',$shopId) }}">Download Excel</a>
+               </div>
                 {!! $list_payments ?? '' !!}
 
             </div>
